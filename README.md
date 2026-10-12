@@ -61,7 +61,8 @@ cd duo-brightness-sync
 The installer runs a preflight (`duo-brightness-sync.ps1 -Probe`), copies the
 daemon to `%LOCALAPPDATA%\duo-brightness-sync\`, registers a **logon scheduled
 task** for your user (no admin, battery-friendly, unlimited runtime) and starts
-it.
+it. The task runs the daemon through `conhost.exe --headless`, so no console
+window ever appears.
 
 Tail the log:
 
@@ -143,6 +144,14 @@ Different generations may differ. Re-capture on your machine:
 - **`no WmiMonitorBrightness instance`** — unusual WMI state; reboot or check
   `Get-CimInstance -Namespace root/wmi -ClassName WmiMonitorBrightness`.
 - **Second panel ignores writes** — check HDR is off on the second display.
+- **A PowerShell/Windows Terminal window appears** (often just minimized, or a
+  stray `powershell.exe` tab) — with Windows Terminal as the *default terminal
+  application*, `powershell.exe -WindowStyle Hidden` is ignored: the console is
+  delegated to Terminal before PowerShell can hide it
+  ([microsoft/terminal#12464](https://github.com/microsoft/terminal/issues/12464)).
+  The installer therefore registers the task as
+  `conhost.exe --headless "<powershell.exe>" …`, which never creates a window.
+  If you register the task by hand, use the same wrapper.
 - Events not firing after sleep/resume: the daemon re-registers watchers on
   errors and every 30 minutes; the 2 s fallback keeps syncing regardless.
 

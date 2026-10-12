@@ -14,7 +14,7 @@ Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
 
 Write-Host 'Stopping running daemon processes...'
-Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe' or Name='conhost.exe'" |
     Where-Object { $_.CommandLine -like "*$daemonName*" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 

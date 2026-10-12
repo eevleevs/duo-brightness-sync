@@ -27,7 +27,7 @@ $daemonDst = Join-Path $installDir $daemonName
 $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 
 Write-Host "Stopping any running instance..."
-Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe' or Name='conhost.exe'" |
     Where-Object { $_.CommandLine -like "*$daemonName*" } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 
@@ -39,8 +39,12 @@ Copy-Item -LiteralPath $daemonSrc -Destination $daemonDst -Force
 
 Write-Host "Registering scheduled task '$TaskName' (at logon, current user, no admin needed)..."
 $exe = Join-Path $PSHOME 'powershell.exe'
-$action = New-ScheduledTaskAction -Execute $exe `
-    -Argument "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$daemonDst`""
+$conhost = Join-Path $env:WINDIR 'System32\conhost.exe'
+# conhost --headless: no console window at all. Needed because Windows Terminal
+# (default terminal app) ignores -WindowStyle Hidden and only minimizes its
+# window (github.com/microsoft/terminal/issues/12464).
+$action = New-ScheduledTaskAction -Execute $conhost `
+    -Argument "--headless `"$exe`" -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$daemonDst`""
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $currentUser
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
     -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit ([TimeSpan]::Zero)

@@ -144,6 +144,10 @@ Different generations may differ. Re-capture on your machine:
 - **`no WmiMonitorBrightness instance`** — unusual WMI state; reboot or check
   `Get-CimInstance -Namespace root/wmi -ClassName WmiMonitorBrightness`.
 - **Second panel ignores writes** — check HDR is off on the second display.
+- **Panels match in value but the main one looks dimmer** — G-Helper's
+  dimming works on top of the Windows brightness level and can stay
+  applied, so the main panel shows darker than the `CurrentBrightness`
+  the daemon reads. Turn it off in G-Helper before comparing the panels.
 - **A PowerShell/Windows Terminal window appears** (often just minimized, or a
   stray `powershell.exe` tab) — with Windows Terminal as the *default terminal
   application*, `powershell.exe -WindowStyle Hidden` is ignored: the console is
